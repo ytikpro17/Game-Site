@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="Style.css">
+  <title>Шахи</title>
+  <style>
+    h1 {
+      margin-top: 20px;
+    }
+    .center{
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(8, 60px);
+      grid-template-rows: repeat(8, 60px);
+      border: 0px solid #333;
+
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: auto;
+      font-size: 32px;
+      cursor: pointer;
+      position: relative;
+      box-sizing: border-box;
+
+    }
+    .white { background: #eee; }
+    .black { background: #999; }
+    .hint::after {
+      content: '';
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: rgba(0, 0, 255, 0.5);
+    }
+    .selected {
+      outline: 3px solid orange;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">      
+   <div></div>
+   <div class="nav"> 
+    <a href="index.html">Хрестики-Нулики</a> 
+    <a href="one.html">Тетріс</a>
+    <a href="two.html">Змійка</a>
+    <a href="tree.html">Шахи</a>
+
+  </div> 
+  <img src="https://o-complex.com/_next/image/?url=%2F_next%2Fstatic%2Fmedia%2Fuser.2628b789.png&w=3840&q=100" class="photo" height="50px" width="50px">
+</div>
+
+<h1>Шахи</h1>
+<div class="center">
+  <div id="board"></div>
+</div>
+
+
+<script>
+  const board = document.getElementById('board');
+  const pieces = {
+    r: '♜', n: '♞', b: '♝', q: '♛', k: '♚', p: '♟',
+    R: '♖', N: '♘', B: '♗', Q: '♕', K: '♔', P: '♙'
+  };
+
+  const startPosition = [
+    'r','n','b','q','k','b','n','r',
+    'p','p','p','p','p','p','p','p',
+    '','','','','','','','',
+    '','','','','','','','',
+    '','','','','','','','',
+    '','','','','','','','',
+    'P','P','P','P','P','P','P','P',
+    'R','N','B','Q','K','B','N','R'
+  ];
+
+  let selected = null;
+  let currentPlayer = 'white';
+
+  function getColor(piece) {
+    if (!piece) return null;
+    return piece === piece.toUpperCase() ? 'white' : 'black';
+  }
+
+  function getMoves(index) {
+    const piece = startPosition[index];
+    const color = getColor(piece);
+    const moves = [];
+    const row = Math.floor(index / 8);
+    const col = index % 8;
+
+    const directions = {
+      p: [[1, 0], [2, 0], [3, 0], [1, -1], [1, 1]],
+      P: [[-1, 0], [-2, 0], [-3, 0], [-1, -1], [-1, 1]],
+      r: [[1,0],[0,1],[-1,0],[0,-1]],
+      b: [[1,1],[1,-1],[-1,1],[-1,-1]],
+      q: [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+      k: [[1,0],[0,1],[-1,0],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]],
+      n: [[2,1],[1,2],[-1,2],[-2,1],[-2,-1],[-1,-2],[1,-2],[2,-1]]
+    };
+
+    const type = piece.toLowerCase();
+    const dirSet = directions[piece] || directions[type];
+    if (!dirSet) return [];
+
+    for (let [dr, dc] of dirSet) {
+      for (let step = 1; step <= (type === 'k' || type === 'n' || type === 'p' ? 1 : 7); step++) {
+        const r = row + dr * step;
+        const c = col + dc * step;
+        if (r < 0 || r > 7 || c < 0 || c > 7) break;
+        const target = r * 8 + c;
+        const targetPiece = startPosition[target];
+        const targetColor = getColor(targetPiece);
+
+        if (type === 'p' || type === 'P') {
+          const forward = dc === 0;
+          const diagonal = dc !== 0;
+          const isStartRow = (type === 'p' && row === 1) || (type === 'P' && row === 6);
+          const isForwardEmpty = !targetPiece;
+          const isEnemy = targetPiece && targetColor !== color;
+
+          if (forward && isForwardEmpty) {
+            if (step === 1) moves.push(target);
+            if (step === 2 && isStartRow) moves.push(target);
+            if (step === 3 && isStartRow) moves.push(target);
+          }
+          if (diagonal && isEnemy) {
+            moves.push(target);
+          }
+          break;
+        }
+
+        if (!targetPiece) {
+          moves.push(target);
+        } else {
+          if (targetColor !== color) moves.push(target);
+          break;
+        }
+
+        if (type === 'n' || type === 'k') break;
+      }
+    }
+    return moves;
+  }
+
+  function renderBoard(hints = []) {
+    board.innerHTML = '';
+    for (let i = 0; i < 64; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell ' + ((Math.floor(i / 8) + i % 8) % 2 === 0 ? 'white' : 'black');
+      cell.dataset.index = i;
+      cell.textContent = pieces[startPosition[i]] || '';
+      if (hints.includes(i)) cell.classList.add('hint');
+      if (selected === i) cell.classList.add('selected');
+      cell.addEventListener('click', () => handleClick(i));
+      board.appendChild(cell);
+    }
+  }
+
+  function handleClick(i) {
+    const piece = startPosition[i];
+    const color = getColor(piece);
+
+    if (selected === null) {
+      if (piece && color === currentPlayer) {
+        selected = i;
+        const moves = getMoves(i);
+        renderBoard(moves);
+      }
+    } else {
+      const moves = getMoves(selected);
+      if (moves.includes(i)) {
+        startPosition[i] = startPosition[selected];
+        startPosition[selected] = '';
+        currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+      }
+      selected = null;
+      renderBoard();
+    }
+  }
+
+  renderBoard();
+</script>
+
+</body>
+</html>

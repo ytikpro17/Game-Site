@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <title>Змійка</title>
+  <link rel="stylesheet" href="Style.css">
+  <style>
+    canvas { background: #000; display: block; margin: 20px auto; }
+  </style>
+</head>
+<body>
+  <div class="header">      
+   <div></div>
+   <div class="nav"> 
+    <a href="index.html">Хрестики-Нулики</a> 
+    <a href="one.html">Тетріс</a>
+    <a href="two.html">Змійка</a>
+    <a href="tree.html">Шахи</a>
+
+  </div> 
+  <img src="https://o-complex.com/_next/image/?url=%2F_next%2Fstatic%2Fmedia%2Fuser.2628b789.png&w=3840&q=100" class="photo"height="50px" width="50px">
+</div>
+
+<h1 style="text-align:center;">Змійка</h1>
+<canvas id="game" width="400" height="400"></canvas>
+<script>
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const grid = 20;
+  let snake = [{x: 160, y: 160}];
+  let dx = grid, dy = 0;
+  let apple = {x: 200, y: 200};
+
+  function draw() {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    snake.forEach((s, i) => {
+      ctx.fillStyle = i === 0 ? 'lime' : 'green';
+      ctx.fillRect(s.x, s.y, grid, grid);
+    });
+
+    ctx.fillStyle = 'red';
+    ctx.fillRect(apple.x, apple.y, grid, grid);
+  }
+
+  function move() {
+    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+    snake.unshift(head);
+
+    if (head.x === apple.x && head.y === apple.y) {
+      apple.x = Math.floor(Math.random() * 20) * grid;
+      apple.y = Math.floor(Math.random() * 20) * grid;
+    } else {
+      snake.pop();
+    }
+
+    if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400 ||
+      snake.slice(1).some(s => s.x === head.x && s.y === head.y)) {
+      alert('Гра завершена!');
+    snake = [{x: 160, y: 160}];
+    dx = grid; dy = 0;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -grid; }
+  if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = grid; }
+  if (e.key === 'ArrowLeft' && dx === 0) { dx = -grid; dy = 0; }
+  if (e.key === 'ArrowRight' && dx === 0) { dx = grid; dy = 0; }
+});
+
+function loop() {
+  move();
+  draw();
+  setTimeout(loop, 150);
+}
+
+loop();
+</script>
+</body>
+</html>
