@@ -9,7 +9,7 @@
     canvas { background: #000; display: block; margin: 20px auto; }
   </style>
 </head>
-<body>
+<body style="position: fixed;">
   <div class="header">      
    <div></div>
    <div class="nav"> 
@@ -75,7 +75,7 @@
     if (e.key === 'ArrowRight' && dx === 0) { dx = grid; dy = 0; }
   });
 
-  // Свайпи для мобільних
+
   let touchStartX = 0;
   let touchStartY = 0;
 
